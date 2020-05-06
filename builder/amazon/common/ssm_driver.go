@@ -50,11 +50,6 @@ func (sd *SSMDriver) StartSession(ctx context.Context) error {
 		return err
 	}
 
-	defer func() {
-		stdout.Close()
-		stderr.Close()
-	}()
-
 	// Aggregate all output into one reader
 	combinedOut := io.MultiReader(stdout, stderr)
 
@@ -64,6 +59,7 @@ func (sd *SSMDriver) StartSession(ctx context.Context) error {
 	}
 
 	output := bufio.NewScanner(combinedOut)
+	successLogLine := fmt.Sprintf("opened for sessionId %s", *sd.Session.SessionId)
 	for output.Scan() {
 		if output.Err() != nil && output.Err() != io.EOF {
 			break
@@ -80,7 +76,7 @@ func (sd *SSMDriver) StartSession(ctx context.Context) error {
 			line := fmt.Sprintf("[%s] %s\n", sd.PluginName, out)
 			log.Print(line)
 
-			if strings.Contains(line, "opened for sessionId") {
+			if strings.Contains(line, successLogLine) {
 				return nil
 			}
 		}
