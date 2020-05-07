@@ -50,7 +50,7 @@ func (p *PostProcessor) Configure(raws ...interface{}) error {
 	}
 
 	// combine Tag and Tags fields
-	allTags = append(allTags, p.config.Tags...)
+	allTags := p.config.Tags
 	allTags = append(allTags, p.config.Tag...)
 
 	p.config.Tags = allTags
