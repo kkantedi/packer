@@ -20,9 +20,11 @@ const BuilderId = "packer.post-processor.docker-tag"
 type Config struct {
 	common.PackerConfig `mapstructure:",squash"`
 
-	Repository string   `mapstructure:"repository"`
-	Tag        []string `mapstructure:"tag"`
-	Force      bool
+	Repository string `mapstructure:"repository"`
+	// Kept for backwards compatability
+	Tag   []string `mapstructure:"tag"`
+	Tags  []string `mapstructure:"tags"`
+	Force bool
 
 	ctx interpolate.Context
 }
@@ -68,8 +70,23 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packer.Ui, artifact 
 
 	importRepo := p.config.Repository
 	var lastTaggedRepo = importRepo
+
+	// combine Tag and Tags fields
+	allTags := []string{}
+	for _, tag := range p.config.Tags {
+		allTags = append(allTags, tag)
+	}
 	if len(p.config.Tag) > 0 {
-		for _, tag := range p.config.Tag {
+		ui.Say("Deprecation warning: \"tag\" option has been replaced with " +
+			"\"tags\". In future versions of Packer, this configuration may " +
+			"not work. Please call Packer Fix against your template ")
+	}
+	for _, tag := range p.config.Tag {
+		allTags = append(allTags, tag)
+	}
+
+	if len(allTags) > 0 {
+		for _, tag := range allTags {
 			local := importRepo + ":" + tag
 			ui.Message("Tagging image: " + artifact.Id())
 			ui.Message("Repository: " + local)
