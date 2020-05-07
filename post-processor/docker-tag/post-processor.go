@@ -50,13 +50,9 @@ func (p *PostProcessor) Configure(raws ...interface{}) error {
 	}
 
 	// combine Tag and Tags fields
-	allTags := []string{}
-	for _, tag := range p.config.Tags {
-		allTags = append(allTags, tag)
-	}
-	for _, tag := range p.config.Tag {
-		allTags = append(allTags, tag)
-	}
+	allTags = append(allTags, p.config.Tags...)
+	allTags = append(allTags, p.config.Tag...)
+
 	p.config.Tags = allTags
 
 	return nil
