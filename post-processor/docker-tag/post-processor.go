@@ -49,11 +49,27 @@ func (p *PostProcessor) Configure(raws ...interface{}) error {
 		return err
 	}
 
+	// combine Tag and Tags fields
+	allTags := []string{}
+	for _, tag := range p.config.Tags {
+		allTags = append(allTags, tag)
+	}
+	for _, tag := range p.config.Tag {
+		allTags = append(allTags, tag)
+	}
+	p.config.Tags = allTags
+
 	return nil
 
 }
 
 func (p *PostProcessor) PostProcess(ctx context.Context, ui packer.Ui, artifact packer.Artifact) (packer.Artifact, bool, bool, error) {
+	if len(p.config.Tag) > 0 {
+		ui.Say("Deprecation warning: \"tag\" option has been replaced with " +
+			"\"tags\". In future versions of Packer, this configuration may " +
+			"not work. Please call Packer Fix against your template ")
+	}
+
 	if artifact.BuilderId() != BuilderId &&
 		artifact.BuilderId() != dockerimport.BuilderId {
 		err := fmt.Errorf(
@@ -71,22 +87,8 @@ func (p *PostProcessor) PostProcess(ctx context.Context, ui packer.Ui, artifact 
 	importRepo := p.config.Repository
 	var lastTaggedRepo = importRepo
 
-	// combine Tag and Tags fields
-	allTags := []string{}
-	for _, tag := range p.config.Tags {
-		allTags = append(allTags, tag)
-	}
-	if len(p.config.Tag) > 0 {
-		ui.Say("Deprecation warning: \"tag\" option has been replaced with " +
-			"\"tags\". In future versions of Packer, this configuration may " +
-			"not work. Please call Packer Fix against your template ")
-	}
-	for _, tag := range p.config.Tag {
-		allTags = append(allTags, tag)
-	}
-
-	if len(allTags) > 0 {
-		for _, tag := range allTags {
+	if len(p.config.Tags) > 0 {
+		for _, tag := range p.config.Tags {
 			local := importRepo + ":" + tag
 			ui.Message("Tagging image: " + artifact.Id())
 			ui.Message("Repository: " + local)
